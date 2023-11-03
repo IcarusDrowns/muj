@@ -3,9 +3,6 @@ import { useCallback, useState } from "react";
 import { NextPageContext } from "next";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/router";
-import { FcGoogle } from "react-icons/fc";
-import { FaGithub } from "react-icons/fa";
-
 import Input from "@/components/Input";
 
 export async function getServerSideProps(context: NextPageContext) {
@@ -31,27 +28,26 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-
+  const [errorMessage, setErrorMessage] = useState("");
   const [variant, setVariant] = useState("login");
 
   const toggleVariant = useCallback(() => {
-    setVariant((currentVariant) =>
-      currentVariant === "login" ? "register" : "login"
-    );
+    setVariant((currentVariant) => currentVariant === "login" ? "register" : "login");
   }, []);
 
   const login = useCallback(async () => {
-    try {
-      await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-        callbackUrl: "/",
-      });
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      callbackUrl: "/",
+    });
 
-      router.push("/profiles");
-    } catch (error) {
-      console.log(error);
+    if (result?.error) {
+      console.log('Setting error:', result.error);
+      setErrorMessage(result.error);
+    } else {
+      router.push("/");
     }
   }, [email, password, router]);
 
@@ -65,9 +61,14 @@ const Auth = () => {
 
       login();
     } catch (error) {
+      setErrorMessage("An unexpected error occurred during registration");
       console.log(error);
     }
   }, [email, name, password, login]);
+
+  
+      
+     
 
   return (
     <div className="relative h-full w-full bg-[url('/images/hero.jpg')] bg-no-repeat bg-center bg-fixed bg-cover">
@@ -111,6 +112,10 @@ const Auth = () => {
             >
               {variant === "login" ? "Login" : "Sign up"}
             </button>
+            {errorMessage && (
+        <p className="text-red-500 mt-4">{errorMessage}</p>
+      )}
+
             <p className="text-neutral-500 mt-12">
               {variant === "login"
                 ? "First time using MUJ OPENCOURSEWARE?"
